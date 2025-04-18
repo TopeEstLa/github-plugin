@@ -4,6 +4,8 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -17,9 +19,8 @@ import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +46,7 @@ public class GitHubRepositoryName {
              * The first set of patterns extract the host, owner and repository names
              * from URLs that include a '.git' suffix, removing the suffix from the
              * repository name.
-             */
+            */
             Pattern.compile(".+@(.+):([^/]+)/([^/]+)\\.git(?:/)?"),
             Pattern.compile("https?://[^/]+@([^/]+)/([^/]+)/([^/]+)\\.git(?:/)?"),
             Pattern.compile("https?://([^/]+)/([^/]+)/([^/]+)\\.git(?:/)?"),
@@ -56,7 +57,7 @@ public class GitHubRepositoryName {
              * from all other URLs. Note that these patterns must be processed *after*
              * the first set, to avoid any '.git' suffix that may be present being included
              * in the repository name.
-             */
+            */
             Pattern.compile(".+@(.+):([^/]+)/([^/]+)/?"),
             Pattern.compile("https?://[^/]+@([^/]+)/([^/]+)/([^/]+)/?"),
             Pattern.compile("https?://([^/]+)/([^/]+)/([^/]+)/?"),
@@ -68,7 +69,6 @@ public class GitHubRepositoryName {
      * Create {@link GitHubRepositoryName} from URL
      *
      * @param url repo url. Can be null
-     *
      * @return parsed {@link GitHubRepositoryName} or null if it cannot be parsed from the specified URL
      */
     @CheckForNull
@@ -89,7 +89,6 @@ public class GitHubRepositoryName {
 
     /**
      * @param projectProperty project property to extract url. Can be null
-     *
      * @return parsed as {@link GitHubRepositoryName} object url to GitHub project
      * @see #create(String)
      * @since 1.14.1
@@ -112,9 +111,9 @@ public class GitHubRepositoryName {
     public final String repositoryName;
 
     public GitHubRepositoryName(String host, String userName, String repositoryName) {
-        this.host = host;
-        this.userName = userName;
-        this.repositoryName = repositoryName;
+        this.host = host.toLowerCase(Locale.ROOT);
+        this.userName = userName.toLowerCase(Locale.ROOT);
+        this.repositoryName = repositoryName.toLowerCase(Locale.ROOT);
     }
 
     public String getHost() {
@@ -131,7 +130,7 @@ public class GitHubRepositoryName {
 
     /**
      * Resolves this name to the actual reference by {@link GHRepository}
-     *
+     * <p>
      * Shortcut for {@link #resolve(Predicate)} with always true predicate
      * ({@link Predicates#alwaysTrue()}) as argument
      */
@@ -141,22 +140,21 @@ public class GitHubRepositoryName {
 
     /**
      * Resolves this name to the actual reference by {@link GHRepository}.
-     *
+     * <p>
      * Since the system can store multiple credentials,
      * and only some of them might be able to see this name in question,
      * this method uses {@link org.jenkinsci.plugins.github.config.GitHubPluginConfig#findGithubConfig(Predicate)}
      * and attempt to find the right credential that can
      * access this repository.
-     *
+     * <p>
      * Any predicate as argument will be combined with {@link GitHubServerConfig#withHost(String)} to find only
      * corresponding for this repo name authenticated github repository
-     *
+     * <p>
      * This method walks multiple repositories for each credential that can access the repository. Depending on
      * what you are trying to do with the repository, you might have to keep trying until a {@link GHRepository}
      * with suitable permission is returned.
      *
      * @param predicate helps to filter only useful for resolve {@link GitHubServerConfig}s
-     *
      * @return iterable with lazy login process for getting authenticated repos
      * @since 1.13.0
      */
@@ -168,7 +166,7 @@ public class GitHubRepositoryName {
 
     /**
      * Variation of {@link #resolve()} method that just returns the first valid repository object.
-     *
+     * <p>
      * This is useful if the caller only relies on the read access to the repository and doesn't need to
      * walk possible candidates.
      */
